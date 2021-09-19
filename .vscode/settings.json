@@ -1,0 +1,11 @@
+{
+    "python.defaultInterpreterPath": "python",
+    "autoDocstring.docstringFormat": "google",
+    "python.linting.flake8Enabled": true,
+    "editor.formatOnSave": true,
+    "python.formatting.blackArgs": [
+        "--line-length",
+        "79"
+    ],
+    "python.formatting.provider": "black",
+}

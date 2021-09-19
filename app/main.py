@@ -6,17 +6,20 @@ import io
 
 app = Flask(__name__)
 
-@app.route('/')
+
+@app.route("/")
 def hello_world():
 
     # Full Script.
-    im = Image.new(mode="RGB", size=(200, 200), color = (255,0,0))
+    im = Image.new(mode="RGB", size=(200, 200), color=(255, 0, 0))
     data = io.BytesIO()
     im.save(data, "JPEG")
     encoded_img_data = base64.b64encode(data.getvalue())
 
-    return render_template("index.html", img_data=encoded_img_data.decode('utf-8'))
+    return render_template(
+        "index.html", img_data=encoded_img_data.decode("utf-8")
+    )
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+if __name__ == "__main__":
+    app.run(host="0.0.0.0")
