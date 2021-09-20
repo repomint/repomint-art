@@ -1,77 +1,103 @@
 from flask import Flask, render_template, request
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 import base64
 from io import BytesIO
 import requests
-headers = {'Accept': 'application/vnd.github.inertia-preview+json', 'Authorization':'token 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'}
+import numpy as np
+
 app = Flask(__name__)
 
-@app.route('/')
-def background():
-    if request.args.get('r'):
-        r = int(request.args.get('r'))
-    else:
-        r=250
-    if request.args.get('g'):
-        g = int(request.args.get('g'))
-    else:
-        g=250
-    if request.args.get('b'):
-        b = int(request.args.get('b'))
-    else:
-        b=250
+def return_image(image):
+    data = BytesIO()
+    image.save(data, "PNG")
+    encoded_img_data = base64.b64encode(data.getvalue())
+    return encoded_img_data
 
+def generateRandomNumber(lowIn, highIn, sizeIn):
+    rng = np.random.default_rng(42)
+    ranNumberArray = rng.integers(low=lowIn, high=highIn, size=sizeIn)
+    return ranNumberArray
+
+def convert_stars(stars):
+    if stars < 10:
+        return 5 
+    elif stars < 51:
+        return 10
+    elif stars < 1001:
+        return 15
+    else:
+        return 20
+
+def image(yel_stars,r=250,g=250,b=250):
+    #generate background color
     first_im = Image.new(mode="RGBA", size=(300, 300), color = (r,g,b))
 
-    if request.args.get('repo'):
-        repo = request.args.get('repo')
-        #get the name of the organization/team
-        if repo[-1]=='/':
-            team = repo.split('/')[-3]
-        else:
-            team = repo.split('/')[-2]
-            repo = repo+'/'
+    #get star image        
+    star_url='https://cdn.pixabay.com/photo/2017/01/07/21/22/stars-1961613_1280.png'
+    img = requests.get(star_url).content
+    #preprocess star image
+    team_img = Image.open(BytesIO(img)).convert("RGBA")
+    team_img = team_img.resize((40, 20), resample=Image.NEAREST)
 
-        #get the team picture
-        pic_team = requests.get(f'https://api.github.com/orgs/{team}', headers=headers)
-        pic_team = pic_team.json()['avatar_url']
+    #generate the location of stars *2 for x and y axis
+    hor = generateRandomNumber(0,280,yel_stars*2)
+    #put on the image
+    for x in range(yel_stars):
+        first_im.paste(team_img,(hor[x],hor[x+yel_stars]), team_img)
+    return first_im
+
+@app.route("/", methods=["GET"])
+def home():
+    return render_template("index.html")
+
+
+@app.route('/mint', methods=['POST', 'GET'])
+def mint():
+    if request.method == 'POST':
+        #get data from the form
+        data = [x for x in request.form.values()]
+        pic_team = data[0]
+        stars = int(data[1])
+
+        #convert stars number
+        yel_stars = convert_stars(stars)
+        first_im=image(yel_stars)
+
+
+        #request for the image from url
         pic_team = requests.get(pic_team).content
-
-        #get the number of forks for the repo
-        n_forks = requests.get(f'https://api.github.com/repos/{repo}forks', headers=headers)
-        n_forks = len(n_forks.json())
-
-        #get the number of contributors for the repo
-        n_conts = requests.get(f'https://api.github.com/repos/{repo}contributors', headers=headers)
-        n_conts = len(n_conts.json())
-
-        #get the most significant language of the repo
-        pr_lan = requests.get(f'https://api.github.com/repos/{repo}languages', headers=headers)
-        pr_lan = next(iter(pr_lan.json()))
-
-        #get the number of stargazers for the repo
-        n_str = requests.get(f'https://api.github.com/repos/{repo}stargazers', headers=headers)
-        n_str = len(n_str.json())
-
-        #get the number of subscribers for the repo
-        n_sub = requests.get(f'https://api.github.com/repos/{repo}subscribers', headers=headers)
-        n_sub = len(n_sub.json())
-
+        
+        #preprocess image
         team_img = Image.open(BytesIO(pic_team)).convert("RGBA")
         team_img = team_img.resize((200, 200), resample=Image.NEAREST)
         first_im.paste(team_img,(50,0), team_img)
 
-        draw = ImageDraw.Draw(first_im)
-        draw.text((50, 210),f"{repo}",(0,0,0))
-        draw.text((50, 225),f"Forks:{n_forks}",(0,0,0))
-        draw.text((50, 240),f"Stars:{n_str}",(0,0,0))
-        draw.text((50, 255),f"Contributors:{n_conts}",(0,0,0))
-        draw.text((50, 270),f"Key language:{pr_lan}",(0,0,0))
-        draw.text((50, 285),f"Subscribers:{n_sub}",(0,0,0))
+        #pass image to the user
+        img_data = return_image(first_im)
 
 
-    data = BytesIO()
-    first_im.save(data, "PNG")
-    encoded_img_data = base64.b64encode(data.getvalue())
+    else:
+        if request.args.get('r'):
+            r = int(request.args.get('r'))
+        else:
+            r=250
+        if request.args.get('g'):
+            g = int(request.args.get('g'))
+        else:
+            g=250
+        if request.args.get('b'):
+            b = int(request.args.get('b'))
+        else:
+            b=250
+        if request.args.get('stars'):
+            stars = int(request.args.get('stars'))
+            yel_stars = convert_stars(stars)
+        else:
+            yel_stars = 0
 
-    return render_template("index.html", img_data=encoded_img_data.decode('utf-8'))
+        #generate image
+        first_im=image(yel_stars,r,g,b)
+        #pass image to the user
+        img_data = return_image(first_im)
+
+    return render_template("mint.html", img_data=img_data.decode('utf-8'))
