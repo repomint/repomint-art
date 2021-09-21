@@ -2,7 +2,7 @@
 
 the app is hosted on heroku on https://mintsolana.herokuapp.com/
 
-the index page is contains a form where you can add image url and number of stars
+the index page contains a form where you can add image url and number of stars
 
 the APIish part examples:
 
@@ -16,6 +16,6 @@ Procfile is needed particularly for Heroku
 
 wsgi.py starts the app on Heroku
 
-app contains the templates -- html and potentially css -- as well as main that cntains python code
+app contains the templates -- html and potentially css -- as well as main that contains python code
 
 Generally, file names describe the items

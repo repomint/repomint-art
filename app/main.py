@@ -28,7 +28,7 @@ def convert_stars(stars):
     else:
         return 20
 
-def image(yel_stars,r=250,g=250,b=250):
+def generate_image(yel_stars,r=250,g=250,b=250):
     #generate background color
     first_im = Image.new(mode="RGBA", size=(300, 300), color = (r,g,b))
 
@@ -51,53 +51,44 @@ def home():
     return render_template("index.html")
 
 
-@app.route('/mint', methods=['POST', 'GET'])
-def mint():
-    if request.method == 'POST':
-        #get data from the form
-        data = [x for x in request.form.values()]
-        pic_team = data[0]
+@app.route('/art', methods=['POST'])
+def generate_art():
+
+    #get data from the form
+    data = [x for x in request.form.values()]
+    pic_team = data[0]
+
+    if data[1].isdigit():
         stars = int(data[1])
-
-        #convert stars number
-        yel_stars = convert_stars(stars)
-        first_im=image(yel_stars)
-
-
-        #request for the image from url
-        pic_team = requests.get(pic_team).content
-        
-        #preprocess image
-        team_img = Image.open(BytesIO(pic_team)).convert("RGBA")
-        team_img = team_img.resize((200, 200), resample=Image.NEAREST)
-        first_im.paste(team_img,(50,0), team_img)
-
-        #pass image to the user
-        img_data = return_image(first_im)
-
-
     else:
-        if request.args.get('r'):
-            r = int(request.args.get('r'))
-        else:
-            r=250
-        if request.args.get('g'):
-            g = int(request.args.get('g'))
-        else:
-            g=250
-        if request.args.get('b'):
-            b = int(request.args.get('b'))
-        else:
-            b=250
-        if request.args.get('stars'):
-            stars = int(request.args.get('stars'))
-            yel_stars = convert_stars(stars)
-        else:
-            yel_stars = 0
+        stars = 0
+        
+    if data[2].isdigit():
+        r = int(data[2])
+    else:
+        r = 250
+    if data[3].isdigit():
+        g = int(data[3])
+    else:
+        g=250
+    if data[4].isdigit():
+        b = int(data[4])
+    else:
+        b=250
 
-        #generate image
-        first_im=image(yel_stars,r,g,b)
-        #pass image to the user
-        img_data = return_image(first_im)
+    #convert stars number
+    yel_stars = convert_stars(stars)
+    first_im=generate_image(yel_stars, r, g, b)
 
-    return render_template("mint.html", img_data=img_data.decode('utf-8'))
+    #request for the image from url
+    pic_team = requests.get(pic_team).content
+    
+    #preprocess image
+    team_img = Image.open(BytesIO(pic_team)).convert("RGBA")
+    team_img = team_img.resize((200, 200), resample=Image.NEAREST)
+    first_im.paste(team_img,(50,0), team_img)
+
+    #pass image to the user
+    img_data = return_image(first_im)
+
+    return render_template("art.html", img_data=img_data.decode('utf-8'))

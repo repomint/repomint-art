@@ -9,13 +9,14 @@
 <div>
 	<h1>H1: example url https://avatars.githubusercontent.com/u/38791923?v=4</h1>
 
-    <form action="{{ url_for('mint')}}" method="post">
+    <form action="{{ url_for('generate_art')}}" method="post">
     	<input type="text" name="url" placeholder="url" required="required" />
-        <input type="text" name="stars" placeholder="stars" required="required" />
-        <button type="submit" class="btn">Mint NFT</button>
+        <input type="number" name="stars" placeholder="stars" required="required" />
+        <input type="number" name="r" placeholder="r" />
+        <input type="number" name="g" placeholder="g" />
+        <input type="number" name="b" placeholder="b" />
+        <button type="submit" class="btn">Display NFT</button>
     </form>
-
-
 
 </div>
 </body>
